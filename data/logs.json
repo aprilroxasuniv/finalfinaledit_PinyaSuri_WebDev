@@ -1,0 +1,86 @@
+[
+    {
+        "id": "FLIGHT_03",
+        "type": "flight",
+        "date": "January 19, 2026",
+        "start_time": "10:42",
+        "end_time": "10:03",
+        "summary": {
+            "total_waypoints": 3,
+            "captured_waypoints": 4,
+            "mission_status": "Completed",
+            "pineapples_detected": 24,
+            "healthy_pineapples": 10,
+            "afflicted_pineapples": 14,
+            "most_common_affliction": "Fruit Rot Disease",
+            "avg_confidence": 92.4
+        },
+        "waypoints": [
+            {
+                "waypoint_id": "WP1",
+                "image": "uploads/wp1.jpg",
+                "num_pineapples": 8,
+                "healthy": 3,
+                "afflicted": 5,
+                "afflictions": {
+                    "Fruit Rot Disease": 2,
+                    "Crown Rot Disease": 3
+                }
+            },
+            {
+                "waypoint_id": "WP2",
+                "image": "uploads/wp2.jpg",
+                "num_pineapples": 9,
+                "healthy": 4,
+                "afflicted": 5,
+                "afflictions": {
+                    "Fruit Rot Disease": 4,
+                    "Mealybug Wilt Disease": 1
+                }
+            },
+            {
+                "waypoint_id": "WP2",
+                "image": "uploads/wp2.jpg",
+                "num_pineapples": 9,
+                "healthy": 5,
+                "afflicted": 5,
+                "afflictions": {
+                    "Fruit Rot Disease": 5,
+                    "Mealybug Wilt Disease": 4
+                }
+            }
+        ]
+    },
+    {
+        "type": "upload",
+        "date": "January 22, 2026",
+        "time": "01:27:52",
+        "image": "uploads/1000045195.jpg",
+        "affliction": "Fruit Rot Disease",
+        "afflictions": [
+            {
+                "affliction": "Fruit Rot Disease",
+                "confidence": 0.995
+            },
+            {
+                "affliction": "Crown Rot Disease",
+                "confidence": 0.991
+            },
+            {
+                "affliction": "Fruit Fascination Disorder",
+                "confidence": 0.99
+            },
+            {
+                "affliction": "Healthy",
+                "confidence": 0.876
+            },
+            {
+                "affliction": "Multiple Crown Disorder",
+                "confidence": 0.749
+            }
+        ],
+        "confidence": 0.995,
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": "January 22, 2026 01:27:52"
+    }
+]
