@@ -256,6 +256,16 @@ def analyze_upload():
 def debug_logs():
     return jsonify(load_logs())
 
+from flask import send_from_directory
+
+@app.route("/download/management-strategies")
+def download_management_strategies():
+    return send_from_directory(
+        directory=os.path.join("static", "documents"),
+        path="How to Keep Your Pineapples Healthy_ Local and International Management Tips.pdf",
+        as_attachment=True
+    )
+
 # ================= RUN SERVER =================
 
 if __name__ == "__main__":
