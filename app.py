@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import os
-import random
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from ai.upload_ai import analyze_upload_image
@@ -76,20 +75,6 @@ def data_logs():
     return render_template("data-logs.html", logs=logs)
 
 # ================= DATA LOG ID DETAIL =================
-#@app.route("/data-log/<log_id>")
-#def data_log_detail(log_id):
-#    logs = load_logs()
-#
-#    log = next(
-#        (l for l in logs if l.get("type") == "flight" and l.get("id") == log_id),
-#        None
-#    )
-#
-#    if not log:
-#        return "Flight log not found", 404
-#
-#    return render_template("data-log-detail.html", log=log)
-
 @app.route("/data-log/<log_id>")
 def data_log_detail(log_id):
     logs = load_logs()
@@ -104,7 +89,11 @@ def data_log_detail(log_id):
 
     return render_template("data-log-detail.html", log=log)
 
+
 # ================= API (RASPBERRY PI) =================
+
+
+
 # ---------------- ROUTES ---------------- #
 @app.route("/api/save-upload-result", methods=["POST"])
 def save_upload_result():
@@ -118,259 +107,121 @@ def save_upload_result():
     time = now.strftime("%H:%M:%S")
     timestamp = f"{date} {time}"
 
-    filename = secure_filename(image.filename)
+    filename = f"{int(now.timestamp())}_{secure_filename(image.filename)}"
     image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     image.save(image_path)
 
     image_relative_path = f"uploads/{filename}"
 
-    
-
-    # ✅ RUN AI
     ai_results = analyze_upload_image(image_path)
+    if not ai_results:
+        return jsonify({"error": "AI returned no results"}), 500
 
     normalized_afflictions = [
-    {
-        "affliction": a["affliction"],
-        "confidence": a["confidence"]
-    }
-    for a in ai_results
-]
+        {"affliction": a["affliction"], "confidence": a["confidence"]}
+        for a in ai_results
+    ]
 
     primary = ai_results[0]
-    primary_affliction = primary["affliction"]
-    primary_confidence = primary["confidence"]
 
     recommendation = (
         "No disease detected"
-        if primary_affliction.lower().startswith("healthy")
+        if primary["affliction"].lower().startswith("healthy")
         else "Apply appropriate treatment"
     )
 
     log_entry = {
+        "id": f"upload-{int(now.timestamp())}",
         "type": "upload",
         "date": date,
         "time": time,
         "image": image_relative_path,
-        "affliction": primary_affliction,
-        "afflictions": normalized_afflictions,   # MULTI-LABEL
-        "confidence": primary_confidence,
+        "affliction": primary["affliction"],
+        "afflictions": normalized_afflictions,
+        "confidence": primary["confidence"],
         "recommendation": recommendation,
-        "timestamp": timestamp
+        "timestamp": timestamp,
     }
 
     logs = load_logs()
     logs.append(log_entry)
     save_logs(logs)
 
-    print("AI RESULT:", normalized_afflictions)
-
     return jsonify({
         "message": "Data log saved successfully",
-        "affliction": primary_affliction,
-        "confidence": primary_confidence,
+        "affliction": primary["affliction"],
+        "confidence": primary["confidence"],
         "afflictions": ai_results,
         "recommendation": recommendation
     }), 201
 
 
+@app.route("/api/upload-flight-log", methods=["POST"])
+def upload_flight_log():
 
-#@app.route("/api/upload-flight-log", methods=["POST"])
-#def upload_flight_log():
-#    try:
-#        metadata = json.loads(request.form.get("metadata", "{}"))
-#        images = request.files.getlist("images")
-#
-#        flight_id = metadata.get("flight_id")
-#        date = metadata.get("date")
-#        start_time = metadata.get("start_time")
-#        end_time = metadata.get("end_time")
-#
-#        if not flight_id or not images:
-#            return jsonify({"error": "Missing flight_id or images"}), 400
-#
-#        logs = load_logs()
-#
-#        waypoints = []
-#        affliction_counter = {}
-#        healthy_count = 0
-#
-#        preview_image = "images/placeholder.jpg"
-#
-#
-#        for idx, img in enumerate(images):
-#            filename = secure_filename(img.filename)    
-#            img.save(os.path.join(UPLOAD_FOLDER, filename))
-#
-#            if idx == 0:
-#                preview_image = f"uploads/{filename}"
-#
-#
-#            # 🔁 Placeholder AI (replace later)
-#            affliction = random.choice([
-#                "Healthy Pineapple",
-#                "Crown Rot Disease",
-#                "Fruit Rot Disease",
-#                "Mealybug Wilt Disease",
-#                "Root Rot Disease",
-#                "Multiple Crown Disorder",
-#                "Fruit Fasciation Disorder"
-#            ])
-#            confidence = round(random.uniform(0.85, 0.99), 2)
-#
-#            recommendation = (
-#                "No disease detected"
-#                if affliction == "Healthy Pineapple"
-#                else "Apply appropriate treatment"
-#            )
-#
-#            if affliction == "Healthy Pineapple":
-#                healthy_count += 1
-#            else:
-#                affliction_counter[affliction] = affliction_counter.get(affliction, 0) + 1
-#
-#            waypoints.append({
-#                "waypoint_id": f"WP{idx+1}",
-#                "image": f"uploads/{filename}",   # ✅ FIX
-#                "affliction": affliction,
-#                "confidence": confidence,
-#                "recommendation": recommendation
-#            })
-#
-#
-#        diseased_count = len(images) - healthy_count
-#        dominant_affliction = (
-#            max(affliction_counter, key=affliction_counter.get)
-#            if affliction_counter else "None"
-#        )
-#
-#        overall_risk = (
-#            "Low" if diseased_count == 0 else
-#            "Moderate" if diseased_count < len(images) / 2 else
-#            "High"
-#        )
-#
-#        flight_status = (
-#            "Healthy" if diseased_count == 0 else "Attention Needed"
-#        )
-#
-#        avg_confidence = round(
-#            sum(wp["confidence"] for wp in waypoints) / len(waypoints),
-#            2
-#        ) if waypoints else 0
-#
-#        total_pineapples = healthy_count + diseased_count
-#    
-#    except Exception as e:
-#        print(f"An error occurred: {e}")
-#        return jsonify({"error": str(e)}), 500
+    try:
+            flight_log = request.get_json(force=True)
 
+            if not flight_log:
+                return jsonify({"error": "No JSON received"}), 400
 
-#flight_log = {
-#    "id": "FLIGHT_03",
-#    "type": "flight",
-#    "date": "January 21, 2026",
-#    "start_time": "start_time",
-#    "end_time": "end_time",
-#    "image": "preview_image",
-#
-#    # ================= SUMMARY (MANUAL) =================
-#    "summary": {
-#        "total_waypoints": 3,
-#        "captured_waypoints": 3,
-#        "mission_status": "Completed",
-#
-#        "pineapples_detected": 24,
-#        "healthy_pineapples": 10,
-#        "afflicted_pineapples": 14,
-#
-#        "most_common_affliction": "Fruit Rot Disease",
-#        "avg_confidence": 92.4
-#    },
-#
-#    # ================= WAYPOINTS (MANUAL) =================
-#    "waypoints": [
-#        {
-#            "waypoint_id": "WP1",
-#            "image": "uploads/wp1.jpg",
-#
-#            "num_pineapples": 8,
-#            "healthy": 3,
-#            "afflicted": 5,
-#
-#            "afflictions": {
-#                "Fruit Rot Disease": 2,
-#                "Crown Rot Disease": 3
-#            },
-#
-#            "avg_confidence": 91.2
-#        },
-#
-#        {
-#            "waypoint_id": "WP2",
-#            "image": "uploads/wp2.jpg",
-#
-#            "num_pineapples": 9,
-#            "healthy": 4,
-#            "afflicted": 5,
-#
-#            "afflictions": {
-#                "Fruit Rot Disease": 4,
-#                "Mealybug Wilt Disease": 1
-#            },
-#
-#            "avg_confidence": 94.8
-#        },
-#
-#        {
-#            "waypoint_id": "WP3",
-#            "image": "uploads/wp3.jpg",
-#
-#            "num_pineapples": 7,
-#            "healthy": 3,
-#            "afflicted": 4,
-#
-#            "afflictions": {
-#                "Fruit Rot Disease": 2,
-#                "Root Rot Disease": 2
-#            },
-#
-#            "avg_confidence": 90.5
-#        }
-#    ]
-#}
-#
-#
-#flight_log = {z
-#            "id": flight_id,
-#            "type": "flight",
-#            "date": date,
-#            "start_time": start_time,
-#            "end_time": end_time,
-#            "image": preview_image,
-#            "summary": {
-#                "total_waypoints": len(images),
-#                "captured_waypoints": len(waypoints),
-#                "mission_status": "Completed",
-#                "pineapples_detected": total_pineapples,
-#                "healthy_pineapples": healthy_count,
-#                "afflicted_pineapples": diseased_count,
-#                "most_common_affliction": dominant_affliction,
-#                "avg_confidence": avg_confidence
-#            },
-#            "waypoints": waypoints
-#        }
-#
-#logs.append(flight_log)
-#save_logs(logs)
-#
-#return jsonify({
-#            "status": "success",
-#            "message": "Flight log uploaded successfully",
-#            "flight_id": flight_id
-#        })
-#except Exception as e:
-#return jsonify({"error": str(e)}), 500
+            # safety checks
+            required = ["id", "type", "summary", "waypoints"]
+            for key in required:
+                if key not in flight_log:
+                    return jsonify({"error": f"Missing {key}"}), 400
+
+            logs = load_logs()
+            if any(l.get("id") == flight_log["id"] for l in logs):
+                return jsonify({"error": "Flight ID already exists"}), 409
+            
+            summary = flight_log["summary"]
+
+            flight_log["summary"] = {
+                "total_waypoints": summary.get("total_waypoints", 0),
+                "completed_waypoints": summary.get("completed_waypoints", summary.get("captured_waypoints", 0)),
+                "mission_status": summary.get("mission_status", "Unknown"),
+
+                "pineapple_detected": summary.get("pineapple_detected", summary.get("pineapples_detected", 0)),
+                "healthy": summary.get("healthy", summary.get("healthy_pineapples", 0)),
+                "black_rot": summary.get("black_rot", summary.get("afflicted_pineapples", 0)),
+
+                "common_affliction": summary.get("common_affliction", summary.get("most_common_affliction", "—")),
+                "average_confidence": round(summary.get("average_confidence", summary.get("avg_confidence", 0)), 1)
+            }
+
+            for wp in flight_log["waypoints"]:
+
+                # Normalize images
+                if "images" not in wp:
+                    if "image" in wp:
+                        wp["images"] = [wp["image"]]
+                        del wp["image"]
+                    else:
+                        wp["images"] = []
+
+                # 🔒 Limit to 5 images
+                wp["images"] = wp["images"][:5]
+
+                # Ensure afflictions dict exists
+                wp.setdefault("afflictions", {})
+
+                # Ensure numeric fields exist
+                wp.setdefault("total", 0)
+                wp.setdefault("healthy", 0)
+                wp.setdefault("afflicted", 0)
+
+            logs.append(flight_log)
+            save_logs(logs)
+
+            return jsonify({
+                "status": "success",
+                "message": "Flight log saved",
+                "flight_id": flight_log["id"]
+            }), 201
+
+    except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/analyze-upload", methods=["POST"])
@@ -379,12 +230,16 @@ def analyze_upload():
     if not image:
         return jsonify({"message": "No image provided"}), 400
 
-    filename = secure_filename(image.filename)
+    filename = f"{int(datetime.now().timestamp())}_{secure_filename(image.filename)}"
     image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     image.save(image_path)
 
     results = analyze_upload_image(image_path)
+    if not results:
+        return jsonify({"error": "AI returned no results"}), 500
+
     primary = results[0]
+    
 
     return jsonify({
         "affliction": primary["affliction"],

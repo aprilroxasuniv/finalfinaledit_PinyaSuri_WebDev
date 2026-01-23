@@ -86,33 +86,12 @@
   <div class="log-details">
 
     <div class="log-date-badge">
-      <strong>{{ log.date }}</strong>
+      <strong>{{ log.date or log.timestamp or "—" }}</strong>
     </div>
 
     <div class="log-text">
 
-      <!-- AFFLICTION -->
-  <!--  <div class="log-affliction" id="afflictions-{{ loop.index0 }}">
-      <strong>Afflictions:</strong>
-
-      {% if log.afflictions %}
-        <ul class="affliction-list">
-          {% for a in log.afflictions %}
-            <li>
-              {% if a is string %}
-                {{ a }}
-              {% else %}
-                {{ a.affliction }}
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        —
-      {% endif %}
-    </div>-->
-
-      <div class="log-meta">
+        <div class="log-meta">
         {% if log.type != "flight" %}
           <strong>Avg Confidence:</strong>
 
@@ -216,7 +195,7 @@ function openUploadModal(index) {
   /* ---------- AFFLICTIONS ---------- */
   let afflictions = [];
 
-  if (log.afflictions && log.afflictions.length > 0) {
+  if (Array.isArray(log.afflictions) && log.afflictions.length > 0) {
     // ✅ upload logs
     afflictions = log.afflictions;
   } else if (log.summary?.dominant_affliction) {
@@ -230,9 +209,11 @@ function openUploadModal(index) {
   /* ---------- CONFIDENCE ---------- */
  let avgConfidence = "—";
 
-  if (log.afflictions && log.afflictions.length > 0) {
+  if (Array.isArray(log.afflictions) && log.afflictions.length > 0) {
     const total = log.afflictions.reduce(
-      (sum, a) => sum + Math.min(Math.max(a.confidence, 0), 1),
+      (sum, a) => sum + (typeof a.confidence === "number"
+        ? Math.min(Math.max(a.confidence, 0), 1)
+        : 0),
       0
     );
 
@@ -291,29 +272,7 @@ document.getElementById("menuOverlay").addEventListener("click", () => {
   document.getElementById("menuOverlay").classList.remove("active");
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const targetAffliction = params.get("affliction");
-
-  if (!targetAffliction) return;
-
-  const cards = document.querySelectorAll(".strategy-card");
-
-  cards.forEach(card => {
-    const title = card.querySelector(".strategy-title");
-
-    if (!title) return;
-
-    if (title.innerText.trim() === targetAffliction.trim()) {
-      card.classList.add("active");
-
-      card.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }
-  });
-});
+const cleanPath = imgPath.replace(/^static\//, "");
 
 </script>
 

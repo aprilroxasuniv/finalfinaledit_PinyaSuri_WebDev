@@ -319,12 +319,19 @@ td {
   margin-bottom: 5px;
 }
 
+.waypoint-images {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+
 .log-image {
   width: 100%;
-  border-radius: 15px;
-  margin: 12px 0;
+  height: 80px;
   object-fit: cover;
-  display: block;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 /* ================= MAP ================= */
