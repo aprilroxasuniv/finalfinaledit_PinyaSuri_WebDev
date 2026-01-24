@@ -223,6 +223,28 @@ def upload_flight_log():
     except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+@app.route("/api/waypoint-image", methods=["POST"])
+def upload_waypoint_image():
+    flight_id = request.form.get("flight_id")
+    waypoint = request.form.get("waypoint")
+
+    image = request.files.get("image")
+
+    if not all([flight_id, waypoint, image]):
+        return jsonify({"error": "Missing data"}), 400
+
+    save_dir = f"static/waypoint_images/{flight_id}"
+    os.makedirs(save_dir, exist_ok=True)
+
+    filename = f"{waypoint}.jpg"
+    image.save(os.path.join(save_dir, filename))
+
+    return jsonify({
+        "message": "Waypoint image uploaded",
+        "flight_id": flight_id,
+        "waypoint": waypoint
+    }), 200
+
 
 @app.route("/api/analyze-upload", methods=["POST"])
 def analyze_upload():
