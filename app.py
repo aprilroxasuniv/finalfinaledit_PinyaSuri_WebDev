@@ -193,12 +193,12 @@ def upload_flight_log():
         for wp in flight_log["waypoints"]:
 
                 # 🔧 MAP RASPI FIELD → WEBSITE FIELD
-                wp["total"] = wp.get("total", wp.get("num_pineapples", 0))
+                wp["total"] = wp.get("num_pineapples", wp.get("total", 0))
 
                 # Normalize images
                 if "images" not in wp:
                     if "image" in wp:
-                        wp["images"] = [wp["image"]]
+                        wp["images"] = [wp["image"]]    
                         del wp["image"]
                     else:
                         wp["images"] = []
@@ -210,7 +210,7 @@ def upload_flight_log():
                 wp.setdefault("afflictions", {})
 
                 # Ensure numeric fields exist
-                wp.setdefault("total", 0)
+                wp.setdefault("afflictions", 0)
                 wp.setdefault("healthy", 0)
                 wp.setdefault("afflicted", 0)
 

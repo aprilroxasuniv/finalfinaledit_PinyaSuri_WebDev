@@ -76,8 +76,11 @@
   <div class="log-image">
     {% if log.image %}
       <img src="{{ url_for('static', filename=log.image) }}">
-    {% elif log.waypoints and log.waypoints|length > 0 %}
-      <img src="{{ url_for('static', filename=log.waypoints[0].image) }}">
+    {% elif log.waypoints
+        and log.waypoints|length > 0
+        and log.waypoints[0].images
+        and log.waypoints[0].images|length > 0 %}
+    <img src="{{ log.waypoints[0].images[0] }}">
     {% else %}
       <img src="{{ url_for('static', filename='images/placeholder.jpg') }}">
     {% endif %}
@@ -169,18 +172,21 @@
 const logsData = {{ logs | tojson | safe }};
 
 function openUploadModal(index) {
-  const log = logsData[index]; // ✅ DEFINE FIRST
+  const log = logsData[index];
+
+  if (log.type === "flight") return; // 🚫 prevent modal for flight logs
 
   /* ---------- IMAGE ---------- */
   const imgPath =
     log.image ||
-    (log.waypoints && log.waypoints.length > 0
-      ? log.waypoints[0].image
+    (log.waypoints &&
+    log.waypoints.length > 0 &&
+    log.waypoints[0].images &&
+    log.waypoints[0].images.length > 0
+      ? log.waypoints[0].images[0]
       : "");
 
-  document.getElementById("modalImage").src =
-    imgPath ? "{{ url_for('static', filename='') }}" + imgPath : "";
-
+  document.getElementById("modalImage").src = imgPath || "";
 
   /* ---------- TIMESTAMP (DATE + TIME) ---------- */
   const timestampText =
@@ -271,8 +277,6 @@ document.getElementById("menuOverlay").addEventListener("click", () => {
   document.getElementById("sideMenu").classList.remove("active");
   document.getElementById("menuOverlay").classList.remove("active");
 });
-
-const cleanPath = imgPath.replace(/^static\//, "");
 
 </script>
 
