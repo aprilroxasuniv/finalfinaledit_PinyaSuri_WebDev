@@ -209,6 +209,15 @@
     </div>
   </div>
 
+  <!--<div class="notif-wrapper">
+    <span onclick="toggleNotif()"></span>
+
+    <div id="notifPanel" class="notif-panel">
+      <h4>Notifications</h4>
+      <ul id="notifList"></ul>
+    </div>
+  </div>-->
+
   <!-- ========================== SCRIPTS ========================== -->
   <script>
 
@@ -229,6 +238,23 @@
     contactModal.onclick = function(e) {
       if (e.target === contactModal) closeContact();
     };
+
+
+fetch("/api/notifications")
+  .then(res => res.json())
+  .then(data => {
+    const list = document.getElementById("notifList");
+    list.innerHTML = "";
+
+    data.forEach(n => {
+      list.innerHTML += `
+        <li>
+          <p>${n.message}</p>
+          <small>${n.timestamp}</small>
+        </li>
+      `;
+    });
+  });
 
   </script>
 
