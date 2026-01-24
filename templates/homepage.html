@@ -37,10 +37,10 @@
       <div class="welcome-back">Welcome Back!</div>
     </div>
 
-   <!--  <div class="navbar-right">
+    <div class="navbar-right">
       <div class="doorbell" onclick="toggleNotifications()"></div>
     </div>
-  </nav>-->
+  </nav>
 
   <!-- ========================== HOME SECTION ========================== -->
   <section class="second-page" id="home">
@@ -209,14 +209,14 @@
     </div>
   </div>
 
-  <!--<div class="notif-wrapper">
+  <div class="notif-wrapper">
     <span onclick="toggleNotif()"></span>
 
     <div id="notifPanel" class="notif-panel">
       <h4>Notifications</h4>
       <ul id="notifList"></ul>
     </div>
-  </div>-->
+  </div>
 
   <!-- ========================== SCRIPTS ========================== -->
   <script>
@@ -239,6 +239,10 @@
       if (e.target === contactModal) closeContact();
     };
 
+    // NOTIFICATION PANEL
+    function toggleNotif() {
+  document.getElementById("notifPanel").classList.toggle("show");
+}
 
 fetch("/api/notifications")
   .then(res => res.json())
@@ -255,6 +259,17 @@ fetch("/api/notifications")
       `;
     });
   });
+
+    document.addEventListener("click", function(event) {
+      const panel = document.getElementById("notificationPanel");
+      const bell = document.querySelector(".doorbell");
+
+      if (panel.style.display === "block" &&
+          !panel.contains(event.target) &&
+          !bell.contains(event.target)) {
+        panel.style.display = "none";
+      }
+    });
 
   </script>
 
