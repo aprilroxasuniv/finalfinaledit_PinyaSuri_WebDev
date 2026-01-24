@@ -58,34 +58,6 @@ body {
   cursor: pointer;
 }
 
-/* ================= NOTIFICATION PANEL ================= */
-.notification-panel {
-  position: fixed;
-  top: 78px;
-  right: 10px;
-  width: 230px;
-  background: white;
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 6px 14px rgba(0,0,0,.3);
-  display: none;
-  z-index: 2000;
-}
-
-.notification-panel h3 {
-  font-size: 14px;
-  color: #1b5e30;
-  margin-bottom: 8px;
-}
-
-.notif-item {
-  font-size: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  background: #1b5e30;
-  margin-bottom: 6px;
-}
-
 .nothing {
   font-size: 12px;
   color: gray;

@@ -340,50 +340,6 @@ body {
   line-height: 1.5;
 }
 
-/* ========== NOTIFICATION BELL ========== */
-
-/* NOTIFICATION PANEL */
-.notification-panel {
-  display: none;
-  position: absolute;
-  top: 55px;  /* appears below bell */
-  right: 0;
-  width: 260px;
-  
-  background: white;
-  color: black;
-  border-radius: 12px;
-  padding: 12px;
-
-  box-shadow: 0 6px 20px rgba(0,0,0,.35);
-
-  /* MOST IMPORTANT FIX */
-  z-index: 99999;
-
-  font-family: 'Poppins', sans-serif;
-}
-
-/* Title */
-.notification-panel h3 {
-  margin: 5px 0 10px;
-  font-size: 16px;
-  color: #25691D;
-}
-
-/* Each item */
-.notif-item {
-  padding: 10px;
-  margin-bottom: 8px;
-  border-radius: 7px;
-  background: #F1F9F1;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.notif-item:hover {
-  background: #dff3df;
-}
-
 .nothing {
   text-align: center;
   font-size: 13px;

@@ -68,37 +68,6 @@ body::before {
   margin-left: 8px;
 }
 
-/* NOTIFICATION PANEL */
-.notification-panel {
-  position: fixed;
-  right: 70px;
-  top: 90px;
-  background: white;
-  color: black;
-  width: 260px;
-  padding: 12px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.3);
-  display: none;
-  z-index: 999;
-}
-
-.notification-panel h3 {
-  color: #25691D;
-  margin-top: 0;
-}
-
-.notif-item {
-  background: #f2f8f2;
-  padding: 8px;
-  border-radius: 8px;
-  margin-bottom: 6px;
-}
-
-.notif-item:hover {
-  background: #def0de;
-}
-
 .nothing {
   text-align: center;
   font-size: 13px;
