@@ -160,24 +160,24 @@ def save_upload_result():
 def upload_flight_log():
 
     try:
-            flight_log = request.get_json(force=True)
+        flight_log = request.get_json(force=True)
 
-            if not flight_log:
+        if not flight_log:
                 return jsonify({"error": "No JSON received"}), 400
 
-            # safety checks
-            required = ["id", "type", "summary", "waypoints"]
-            for key in required:
-                if key not in flight_log:
-                    return jsonify({"error": f"Missing {key}"}), 400
+        # safety checks
+        required = ["id", "type", "summary", "waypoints"]
+        for key in required:
+            if key not in flight_log:
+                return jsonify({"error": f"Missing {key}"}), 400
 
-            logs = load_logs()
-            if any(l.get("id") == flight_log["id"] for l in logs):
-                return jsonify({"error": "Flight ID already exists"}), 409
+        logs = load_logs()
+        if any(l.get("id") == flight_log["id"] for l in logs):
+            return jsonify({"error": "Flight ID already exists"}), 409
             
-            summary = flight_log["summary"]
+        summary = flight_log["summary"]
 
-            flight_log["summary"] = {
+        flight_log["summary"] = {
                 "total_waypoints": summary.get("total_waypoints", 0),
                 "completed_waypoints": summary.get("completed_waypoints", summary.get("captured_waypoints", 0)),
                 "mission_status": summary.get("mission_status", "Unknown"),
@@ -190,7 +190,10 @@ def upload_flight_log():
                 "average_confidence": round(summary.get("average_confidence", summary.get("avg_confidence", 0)), 1)
             }
 
-            for wp in flight_log["waypoints"]:
+        for wp in flight_log["waypoints"]:
+
+                # 🔧 MAP RASPI FIELD → WEBSITE FIELD
+                wp["total"] = wp.get("total", wp.get("num_pineapples", 0))
 
                 # Normalize images
                 if "images" not in wp:
@@ -211,10 +214,10 @@ def upload_flight_log():
                 wp.setdefault("healthy", 0)
                 wp.setdefault("afflicted", 0)
 
-            logs.append(flight_log)
-            save_logs(logs)
+        logs.append(flight_log)
+        save_logs(logs)
 
-            return jsonify({
+        return jsonify({
                 "status": "success",
                 "message": "Flight log saved",
                 "flight_id": flight_log["id"]
@@ -233,46 +236,30 @@ def upload_waypoint_image():
     if not all([flight_id, waypoint, image]):
         return jsonify({"error": "Missing data"}), 400
 
+    logs = load_logs()
+
+    for log in logs:
+        if log.get("id") == flight_id:
+            for wp in log.get("waypoints", []):
+                if wp.get("name") == waypoint:
+                    wp.setdefault("images", [])
+                    wp["images"].append(
+                        f"/static/waypoint_images/{flight_id}/{waypoint}.jpg"
+                    )
+
     save_dir = f"static/waypoint_images/{flight_id}"
     os.makedirs(save_dir, exist_ok=True)
 
-    filename = f"{waypoint}.jpg"
+    filename = f"{waypoint}_{int(datetime.now().timestamp())}.jpg"
     image.save(os.path.join(save_dir, filename))
+
+    save_logs(logs)
 
     return jsonify({
         "message": "Waypoint image uploaded",
         "flight_id": flight_id,
         "waypoint": waypoint
     }), 200
-
-
-@app.route("/api/analyze-upload", methods=["POST"])
-def analyze_upload():
-    image = request.files.get("image")
-    if not image:
-        return jsonify({"message": "No image provided"}), 400
-
-    filename = f"{int(datetime.now().timestamp())}_{secure_filename(image.filename)}"
-    image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    image.save(image_path)
-
-    results = analyze_upload_image(image_path)
-    if not results:
-        return jsonify({"error": "AI returned no results"}), 500
-
-    primary = results[0]
-    
-
-    return jsonify({
-        "affliction": primary["affliction"],
-        "confidence": primary["confidence"],
-        "afflictions": results,
-        "recommendation": (
-            "No disease detected"
-            if primary["affliction"].lower().startswith("healthy")
-            else "Apply appropriate treatment"
-        )
-    })
 
 @app.route("/debug-logs")
 def debug_logs():
