@@ -12,14 +12,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGS_FILE = os.path.join(BASE_DIR, "data",  "logs.json")
 
 UPLOAD_FOLDER = "static/uploads"
+WAYPOINT_FOLDER = "static/waypoint_images"
 
 if not os.path.exists(LOGS_FILE):
     with open(LOGS_FILE, "w") as f:
         json.dump([], f)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(WAYPOINT_FOLDER, exist_ok=True)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["WAYPOINT_FOLDER"] = WAYPOINT_FOLDER
 
 def load_logs():
     if os.path.exists(LOGS_FILE):
@@ -116,6 +119,16 @@ def save_upload_result():
     ai_results = analyze_upload_image(image_path)
     if not ai_results:
         return jsonify({"error": "AI returned no results"}), 500
+
+    THRESHOLD = 60
+
+    filtered = [
+        a for a in ai_results
+        if a["confidence"] >= THRESHOLD
+    ]
+
+    if not filtered:
+        filtered = [ai_results[0]]
 
     normalized_afflictions = [
         {"affliction": a["affliction"], "confidence": a["confidence"]}
@@ -228,37 +241,59 @@ def upload_flight_log():
 
 @app.route("/api/waypoint-image", methods=["POST"])
 def upload_waypoint_image():
+    """
+    Fixed version: Properly saves images and returns correct URL
+    """
     flight_id = request.form.get("flight_id")
     waypoint = request.form.get("waypoint")
-
     image = request.files.get("image")
 
     if not all([flight_id, waypoint, image]):
-        return jsonify({"error": "Missing data"}), 400
+        return jsonify({"error": "Missing flight_id, waypoint, or image"}), 400
 
+    # Create directory for this flight's waypoint images
+    save_dir = os.path.join(app.config["WAYPOINT_FOLDER"], flight_id)
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Generate unique filename with timestamp
+    timestamp = int(datetime.now().timestamp())
+    filename = f"{waypoint}_{timestamp}.jpg"
+    file_path = os.path.join(save_dir, filename)
+    
+    # Save the actual image file
+    image.save(file_path)
+
+    # Create the URL path that will work in browser
+    image_url = f"/static/waypoint_images/{flight_id}/{filename}"
+
+    # Update logs with the correct image URL
     logs = load_logs()
+    log_updated = False
 
     for log in logs:
         if log.get("id") == flight_id:
             for wp in log.get("waypoints", []):
                 if wp.get("name") == waypoint:
                     wp.setdefault("images", [])
-                    wp["images"].append(
-                        f"/static/waypoint_images/{flight_id}/{waypoint}.jpg"
-                    )
+                    wp["images"].append(image_url)
+                    log_updated = True
+                    break
+            if log_updated:
+                break
 
-    save_dir = f"static/waypoint_images/{flight_id}"
-    os.makedirs(save_dir, exist_ok=True)
-
-    filename = f"{waypoint}_{int(datetime.now().timestamp())}.jpg"
-    image.save(os.path.join(save_dir, filename))
+    if not log_updated:
+        return jsonify({
+            "error": f"Flight {flight_id} or waypoint {waypoint} not found in logs"
+        }), 404
 
     save_logs(logs)
 
     return jsonify({
-        "message": "Waypoint image uploaded",
+        "status": "success",
+        "message": "Waypoint image uploaded successfully",
         "flight_id": flight_id,
-        "waypoint": waypoint
+        "waypoint": waypoint,
+        "image_url": image_url
     }), 200
 
 @app.route("/debug-logs")
@@ -278,4 +313,4 @@ def download_management_strategies():
 # ================= RUN SERVER =================
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
