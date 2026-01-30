@@ -226,7 +226,7 @@ document.getElementById("menuOverlay").addEventListener("click", () => {
 
 /* ================= SAVE TO DATA LOGS ================= */
 document.querySelector(".save-btn").addEventListener("click", async () => {
-  if (!selectedFile || !analysisResult.affliction) {
+  if (!selectedFile) {
     alert("Please upload and analyze an image first.");
     return;
   }
@@ -241,7 +241,9 @@ document.querySelector(".save-btn").addEventListener("click", async () => {
     });
 
     const result = await response.json();
-    alert(result.message);
+
+    alert(result.message || "Saved successfully!");
+
   } catch (err) {
     console.error(err);
     alert("Failed to save data log.");

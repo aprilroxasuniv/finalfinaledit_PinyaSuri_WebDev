@@ -153,7 +153,7 @@ def save_upload_result():
     normalized_afflictions = [
         {
             "affliction": a["affliction"],
-            "confidence": round(a["confidence"] * 100, 1),
+            "confidence": round(a["confidence"] * 100, 1),  
         }
         for a in ai_results
     ]
@@ -184,7 +184,7 @@ def save_upload_result():
     save_logs(logs)
 
     return jsonify({
-        "message": "Data log saved successfully",
+        "message": "Saved successfully",
         "affliction": primary["affliction"],
         "confidence": primary["confidence"],
         "afflictions": ai_results,
