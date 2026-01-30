@@ -31,27 +31,41 @@ def analyze_upload_image(image_path):
     output = interpreter.get_tensor(output_details[0]["index"])
     output = np.squeeze(output)
 
+    # detection model output
+    if output.ndim == 2:
+        class_scores = np.max(output, axis=1)
+    else:
+        class_scores = output
+
     results = []
 
-    CONF_THRESHOLD = 0.60
+    for i, score in enumerate(class_scores):
+        if str(i) not in labels:
+            continue
 
-    # if model outputs detections
-    if output.ndim == 2:
-        for class_index in range(output.shape[0]):
-            for detection in output[class_index]:
-                if detection >= CONF_THRESHOLD:
-                    results.append({
-                        "affliction": labels.get(str(class_index), "Unknown"),
-                        "confidence": round(float(detection), 3)
-                    })
-
-    # fallback
-    if not results:
         results.append({
-            "affliction": "Healthy Pineapple",
-            "confidence": 0.95
+            "affliction": labels[str(i)],
+            "confidence": float(score)
         })
 
-    return results
+    # 🔥 SORT BY CONFIDENCE
+    results.sort(key=lambda x: x["confidence"], reverse=True)
+
+    # 🔒 HARD FILTER
+    MIN_CONFIDENCE = 0.60
+
+    best = results[0]
+
+    if best["confidence"] < MIN_CONFIDENCE:
+        return [{
+            "affliction": "Healthy Pineapple",
+            "confidence": 0.95
+        }]
+
+    # ✅ RETURN ONLY ONE RESULT
+    return [{
+        "affliction": best["affliction"],
+        "confidence": round(best["confidence"], 3)
+    }]
 
 
