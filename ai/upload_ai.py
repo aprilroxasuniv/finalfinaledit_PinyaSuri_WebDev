@@ -25,46 +25,31 @@ def analyze_upload_image(image_path):
     img = np.array(img, dtype=np.float32) / 255.0
     img = np.expand_dims(img, axis=0)
 
-    interpreter.set_tensor(input_details[0]['index'], img)
+    interpreter.set_tensor(input_details[0]["index"], img)
     interpreter.invoke()
 
-    output = interpreter.get_tensor(output_details[0]['index'])
+    output = interpreter.get_tensor(output_details[0]["index"])
     output = np.squeeze(output)
-
-    print("RAW OUTPUT SHAPE:", output.shape)
-
-    # ✅ Your model outputs [num_classes, num_detections]
-    # We reduce detections → single confidence per class
-    if output.ndim == 2:
-        class_scores = np.max(output, axis=1)
-
-    elif output.ndim == 1:
-        class_scores = output
-
-    else:
-        raise ValueError(f"Unexpected output shape: {output.shape}")
 
     results = []
 
-    for i, score in enumerate(class_scores):
-        score = float(score)
+    CONF_THRESHOLD = 0.60
 
-        # safety check so labels never crash again
-        if str(i) not in labels:
-            continue
+    # if model outputs detections
+    if output.ndim == 2:
+        for class_index in range(output.shape[0]):
+            for detection in output[class_index]:
+                if detection >= CONF_THRESHOLD:
+                    results.append({
+                        "affliction": labels.get(str(class_index), "Unknown"),
+                        "confidence": round(float(detection), 3)
+                    })
 
-        if score >= 0.30:
-            results.append({
-                "affliction": labels[str(i)],
-                "confidence": round(score, 3)
-            })
-
-    results.sort(key=lambda x: x["confidence"], reverse=True)
-
+    # fallback
     if not results:
         results.append({
             "affliction": "Healthy Pineapple",
-            "confidence": 0.99
+            "confidence": 0.95
         })
 
     return results

@@ -195,7 +195,7 @@ async function previewImage(event) {
       data.afflictions.forEach(item => {
         const p = document.createElement("p");
         p.textContent =
-          `${item.affliction} (${Math.round(item.confidence * 100)}%)`;
+          `${item.affliction} (${Math.round(item.confidence) + "%"})`;
         listDiv.appendChild(p);
       });
     }

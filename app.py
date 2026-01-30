@@ -99,6 +99,34 @@ def data_log_detail(log_id):
 
 # ---------------- ROUTES ---------------- #
 @app.route("/api/save-upload-result", methods=["POST"])
+
+@app.route("/api/analyze-upload", methods=["POST"])
+def analyze_upload():
+    image = request.files.get("image")
+
+    if not image:
+        return jsonify({"message": "No image provided"}), 400
+
+    filename = secure_filename(image.filename)
+    temp_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    image.save(temp_path)
+
+    ai_results = analyze_upload_image(temp_path)
+
+    primary = ai_results[0]
+
+    return jsonify({
+        "affliction": primary["affliction"],
+        "confidence": round(primary["confidence"] * 100, 1),
+        "afflictions": [
+            {
+                "affliction": a["affliction"],
+                "confidence": round(a["confidence"] * 100, 1)
+            }
+            for a in ai_results
+        ]
+    }), 200
+
 def save_upload_result():
     image = request.files.get("image")
 
@@ -120,18 +148,13 @@ def save_upload_result():
     if not ai_results:
         return jsonify({"error": "AI returned no results"}), 500
 
-    THRESHOLD = 60
-
-    filtered = [
-        a for a in ai_results
-        if a["confidence"] >= THRESHOLD
-    ]
-
-    if not filtered:
-        filtered = [ai_results[0]]
+    primary = ai_results[0]
 
     normalized_afflictions = [
-        {"affliction": a["affliction"], "confidence": a["confidence"]}
+        {
+            "affliction": a["affliction"],
+            "confidence": round(a["confidence"] * 100, 1),
+        }
         for a in ai_results
     ]
 
