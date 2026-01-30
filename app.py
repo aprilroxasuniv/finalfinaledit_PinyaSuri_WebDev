@@ -99,6 +99,51 @@ def data_log_detail(log_id):
 
 # ---------------- ROUTES ---------------- #
 @app.route("/api/save-upload-result", methods=["POST"])
+def save_upload_result():
+    image = request.files.get("image")
+
+    if not image:
+        return jsonify({"message": "No image provided"}), 400
+
+    now = datetime.now()
+    date = now.strftime("%B %d, %Y")
+    time = now.strftime("%H:%M:%S")
+    timestamp = f"{date} {time}"
+
+    filename = f"{int(now.timestamp())}_{secure_filename(image.filename)}"
+    image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    image.save(image_path)
+
+    image_relative_path = f"uploads/{filename}"
+
+    ai_results = analyze_upload_image(image_path)
+    primary = ai_results[0]
+
+    log_entry = {
+        "id": f"upload-{int(now.timestamp())}",
+        "type": "upload",
+        "date": date,
+        "time": time,
+        "image": image_relative_path,
+        "affliction": primary["affliction"],
+        "afflictions": [
+            {
+                "affliction": a["affliction"],
+                "confidence": round(a["confidence"] * 100, 1)
+            } for a in ai_results
+        ],
+        "confidence": round(primary["confidence"] * 100, 1),
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": timestamp
+    }
+
+    logs = load_logs()
+    logs.append(log_entry)
+    save_logs(logs)
+
+    return jsonify({
+        "message": "Saved successfully"
+    }), 201
 
 @app.route("/api/analyze-upload", methods=["POST"])
 def analyze_upload():
