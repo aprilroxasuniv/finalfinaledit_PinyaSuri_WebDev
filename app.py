@@ -4,6 +4,9 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from ai.upload_ai import analyze_upload_image
+from ultralytics import YOLO
+import cv2
+
 
 
 app = Flask(__name__)

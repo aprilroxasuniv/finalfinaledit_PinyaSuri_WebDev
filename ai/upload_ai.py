@@ -3,6 +3,10 @@ import tensorflow as tf
 from PIL import Image
 import json
 import os
+from ultralytics import YOLO
+import cv2
+
+model = YOLO("runs/detect/train5 (v8n)/weights/best.pt")
 
 LABEL_PATH = "ai/labels.json"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,52 +24,30 @@ with open(LABEL_PATH) as f:
     labels = json.load(f)
 
 def analyze_upload_image(image_path):
-    img = Image.open(image_path).convert("RGB")
-    img = img.resize((640, 640))
-    img = np.array(img, dtype=np.float32) / 255.0
-    img = np.expand_dims(img, axis=0)
+    results = model.predict(
+        source=image_path,
+        conf=0.3,
+        save=False
+    )
 
-    interpreter.set_tensor(input_details[0]["index"], img)
-    interpreter.invoke()
+    detections = []
 
-    output = interpreter.get_tensor(output_details[0]["index"])
-    output = np.squeeze(output)
+    for box in results[0].boxes:
+        class_id = int(box.cls[0])
+        confidence = float(box.conf[0])
 
-    # detection model output
-    if output.ndim == 2:
-        class_scores = np.max(output, axis=1)
-    else:
-        class_scores = output
-
-    results = []
-
-    for i, score in enumerate(class_scores):
-        if str(i) not in labels:
-            continue
-
-        results.append({
-            "affliction": labels[str(i)],
-            "confidence": float(score)
+        detections.append({
+            "affliction": CLASS_NAMES.get(class_id, "Unknown"),
+            "confidence": confidence
         })
 
-    # 🔥 SORT BY CONFIDENCE
-    results.sort(key=lambda x: x["confidence"], reverse=True)
-
-    # 🔒 HARD FILTER
-    MIN_CONFIDENCE = 0.60
-
-    best = results[0]
-
-    if best["confidence"] < MIN_CONFIDENCE:
-        return [{
+    # ❗ fallback if no detections
+    if not detections:
+        detections.append({
             "affliction": "Healthy Pineapple",
-            "confidence": 0.95
-        }]
+            "confidence": 0.85
+        })
 
-    # ✅ RETURN ONLY ONE RESULT
-    return [{
-        "affliction": best["affliction"],
-        "confidence": round(best["confidence"], 3)
-    }]
+    return detections
 
 
