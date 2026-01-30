@@ -110,7 +110,7 @@
             {% endfor %}
 
             {% if count.value > 0 %}
-              {{ ((total.value / count.value) * 100) | round(1) }}%
+              {{ (total.value / count.value) | round(1) }}%
             {% else %}
               —
             {% endif %}
@@ -186,7 +186,9 @@ function openUploadModal(index) {
       ? log.waypoints[0].images[0]
       : "");
 
-  document.getElementById("modalImage").src = imgPath || "";
+  document.getElementById("modalImage").src = imgPath
+    ? `/static/${imgPath}`
+    : "";
 
   /* ---------- TIMESTAMP (DATE + TIME) ---------- */
   const timestampText =
@@ -217,13 +219,11 @@ function openUploadModal(index) {
 
   if (Array.isArray(log.afflictions) && log.afflictions.length > 0) {
     const total = log.afflictions.reduce(
-      (sum, a) => sum + (typeof a.confidence === "number"
-        ? Math.min(Math.max(a.confidence, 0), 1)
-        : 0),
+      (sum, a) => sum + (typeof a.confidence === "number" ? a.confidence : 0),
       0
     );
 
-    avgConfidence = ((total / log.afflictions.length)).toFixed(1);
+    avgConfidence = (total / log.afflictions.length).toFixed(1);
   }
 
   document.getElementById("modalConfidence").innerText =
