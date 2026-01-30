@@ -226,13 +226,14 @@ document.getElementById("menuOverlay").addEventListener("click", () => {
 
 /* ================= SAVE TO DATA LOGS ================= */
 document.querySelector(".save-btn").addEventListener("click", async () => {
-  if (!selectedFile) {
+  if (!selectedFile || !analysisResult) {
     alert("Please upload and analyze an image first.");
     return;
   }
 
   const formData = new FormData();
   formData.append("image", selectedFile);
+  formData.append("analysis", JSON.stringify(analysisResult));
 
   try {
     const response = await fetch("/api/save-upload-result", {
@@ -241,7 +242,6 @@ document.querySelector(".save-btn").addEventListener("click", async () => {
     });
 
     const result = await response.json();
-
     alert(result.message || "Saved successfully!");
 
   } catch (err) {

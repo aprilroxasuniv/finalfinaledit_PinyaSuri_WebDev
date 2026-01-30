@@ -101,9 +101,13 @@ def data_log_detail(log_id):
 @app.route("/api/save-upload-result", methods=["POST"])
 def save_upload_result():
     image = request.files.get("image")
+    analysis_raw = request.form.get("analysis")
 
-    if not image:
-        return jsonify({"message": "No image provided"}), 400
+    if not image or not analysis_raw:
+        return jsonify({"message": "Missing image or analysis"}), 400
+
+    # Parse analysis JSON from frontend
+    analysis = json.loads(analysis_raw)
 
     now = datetime.now()
     date = now.strftime("%B %d, %Y")
@@ -116,8 +120,12 @@ def save_upload_result():
 
     image_relative_path = f"uploads/{filename}"
 
-    ai_results = analyze_upload_image(image_path)
-    primary = ai_results[0]
+    # ✅ USE FRONTEND ANALYSIS (NO AI CALL HERE)
+    afflictions = analysis.get("afflictions", [])
+    primary = afflictions[0] if afflictions else {
+        "affliction": "Healthy Pineapple",
+        "confidence": 0
+    }
 
     log_entry = {
         "id": f"upload-{int(now.timestamp())}",
@@ -125,15 +133,14 @@ def save_upload_result():
         "date": date,
         "time": time,
         "image": image_relative_path,
+        "afflictions": afflictions,
         "affliction": primary["affliction"],
-        "afflictions": [
-            {
-                "affliction": a["affliction"],
-                "confidence": round(a["confidence"] * 100, 1)
-            } for a in ai_results
-        ],
-        "confidence": round(primary["confidence"] * 100, 1),
-        "recommendation": "Apply appropriate treatment",
+        "confidence": primary["confidence"],
+        "recommendation": (
+            "No disease detected"
+            if primary["affliction"].lower().startswith("healthy")
+            else "Apply appropriate treatment"
+        ),
         "timestamp": timestamp
     }
 
@@ -141,9 +148,7 @@ def save_upload_result():
     logs.append(log_entry)
     save_logs(logs)
 
-    return jsonify({
-        "message": "Saved successfully"
-    }), 201
+    return jsonify({"message": "Saved successfully"}), 201
 
 @app.route("/api/analyze-upload", methods=["POST"])
 def analyze_upload():
@@ -171,71 +176,6 @@ def analyze_upload():
             for a in ai_results
         ]
     }), 200
-
-def save_upload_result():
-    image = request.files.get("image")
-
-    if not image:
-        return jsonify({"message": "No image provided"}), 400
-
-    now = datetime.now()
-    date = now.strftime("%B %d, %Y")
-    time = now.strftime("%H:%M:%S")
-    timestamp = f"{date} {time}"
-
-    filename = f"{int(now.timestamp())}_{secure_filename(image.filename)}"
-    image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    image.save(image_path)
-
-    image_relative_path = f"uploads/{filename}"
-
-    ai_results = analyze_upload_image(image_path)
-    if not ai_results:
-        return jsonify({"error": "AI returned no results"}), 500
-
-    primary = ai_results[0]
-
-    normalized_afflictions = [
-        {
-            "affliction": a["affliction"],
-            "confidence": round(a["confidence"] * 100, 1),  
-        }
-        for a in ai_results
-    ]
-
-    primary = ai_results[0]
-
-    recommendation = (
-        "No disease detected"
-        if primary["affliction"].lower().startswith("healthy")
-        else "Apply appropriate treatment"
-    )
-
-    log_entry = {
-        "id": f"upload-{int(now.timestamp())}",
-        "type": "upload",
-        "date": date,
-        "time": time,
-        "image": image_relative_path,
-        "affliction": primary["affliction"],
-        "afflictions": normalized_afflictions,
-        "confidence": primary["confidence"],
-        "recommendation": recommendation,
-        "timestamp": timestamp,
-    }
-
-    logs = load_logs()
-    logs.append(log_entry)
-    save_logs(logs)
-
-    return jsonify({
-        "message": "Saved successfully",
-        "affliction": primary["affliction"],
-        "confidence": primary["confidence"],
-        "afflictions": ai_results,
-        "recommendation": recommendation
-    }), 201
-
 
 @app.route("/api/upload-flight-log", methods=["POST"])
 def upload_flight_log():
