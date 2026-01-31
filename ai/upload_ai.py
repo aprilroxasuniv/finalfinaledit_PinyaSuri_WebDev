@@ -25,7 +25,7 @@ with open(LABEL_PATH, "r") as f:
 def analyze_upload_image(image_path):
     # Load image
     img = Image.open(image_path).convert("RGB")
-    img = img.resize((224, 224))
+    img = img.resize((640, 640))
 
     # Normalize
     input_data = np.expand_dims(
