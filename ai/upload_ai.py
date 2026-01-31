@@ -27,11 +27,9 @@ def analyze_upload_image(image_path):
     img = Image.open(image_path).convert("RGB")
     img = img.resize((640, 640))
 
-    # Normalize
-    input_data = np.expand_dims(
-        np.array(img, dtype=np.float32) / 255.0,
-        axis=0
-    )
+    input_data = np.array(img, dtype=np.float32)
+    input_data = input_data / 255.0          # normalize
+    input_data = np.expand_dims(input_data, axis=0)
 
     # Run inference
     interpreter.set_tensor(input_details[0]["index"], input_data)
@@ -41,6 +39,8 @@ def analyze_upload_image(image_path):
     # Get prediction
     class_id = int(np.argmax(output))
     confidence = float(output[class_id])
+
+    print("INPUT DETAILS:", input_details)
 
     return [{
         "affliction": labels[str(class_id)],
