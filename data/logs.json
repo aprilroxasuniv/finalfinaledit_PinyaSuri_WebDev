@@ -82,5 +82,110 @@
         "confidence": 0.995,
         "recommendation": "Apply appropriate treatment",
         "timestamp": "January 22, 2026 01:27:52"
+    },
+    {
+        "id": "upload-1769875076",
+        "type": "upload",
+        "date": "January 31, 2026",
+        "time": "23:57:56",
+        "image": "uploads/1769875076_1000046306.jpg",
+        "afflictions": [
+            {
+                "affliction": "Fruit Fascination Disorder",
+                "confidence": 74.11
+            },
+            {
+                "affliction": "Fruit Fascination Disorder",
+                "confidence": 57.41
+            },
+            {
+                "affliction": "Healthy",
+                "confidence": 52.96
+            }
+        ],
+        "affliction": "Fruit Fascination Disorder",
+        "confidence": 74.11,
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": "January 31, 2026 23:57:56"
+    },
+    {
+        "id": "upload-1769875100",
+        "type": "upload",
+        "date": "January 31, 2026",
+        "time": "23:58:20",
+        "image": "uploads/1769875100_1000046822.jpg",
+        "afflictions": [
+            {
+                "affliction": "Root Rot Disease",
+                "confidence": 69.18
+            }
+        ],
+        "affliction": "Root Rot Disease",
+        "confidence": 69.18,
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": "January 31, 2026 23:58:20"
+    },
+    {
+        "id": "upload-1769875155",
+        "type": "upload",
+        "date": "January 31, 2026",
+        "time": "23:59:15",
+        "image": "uploads/1769875155_1000046819.jpg",
+        "afflictions": [
+            {
+                "affliction": "Fruit Rot Disease",
+                "confidence": 69
+            }
+        ],
+        "affliction": "Fruit Rot Disease",
+        "confidence": 69,
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": "January 31, 2026 23:59:15"
+    },
+    {
+        "id": "upload-1769875237",
+        "type": "upload",
+        "date": "February 01, 2026",
+        "time": "00:00:37",
+        "image": "uploads/1769875237_1000046818.jpg",
+        "afflictions": [
+            {
+                "affliction": "Crown Rot Disease",
+                "confidence": 91.75
+            }
+        ],
+        "affliction": "Crown Rot Disease",
+        "confidence": 91.75,
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": "February 01, 2026 00:00:37"
+    },
+    {
+        "id": "upload-1769875271",
+        "type": "upload",
+        "date": "February 01, 2026",
+        "time": "00:01:11",
+        "image": "uploads/1769875271_1000046821.jpg",
+        "afflictions": [
+            {
+                "affliction": "Mealybug Wilt Disease",
+                "confidence": 83.08
+            },
+            {
+                "affliction": "Mealybug Wilt Disease",
+                "confidence": 69.59
+            },
+            {
+                "affliction": "Mealybug Wilt Disease",
+                "confidence": 60.96
+            },
+            {
+                "affliction": "Mealybug Wilt Disease",
+                "confidence": 32.43
+            }
+        ],
+        "affliction": "Mealybug Wilt Disease",
+        "confidence": 83.08,
+        "recommendation": "Apply appropriate treatment",
+        "timestamp": "February 01, 2026 00:01:11"
     }
 ]

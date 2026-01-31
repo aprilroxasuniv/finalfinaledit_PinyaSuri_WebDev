@@ -1,48 +1,55 @@
-import numpy as np
-import tensorflow as tf
-from PIL import Image
-import json
+from ultralytics import YOLO
+import cv2
 import os
+import numpy as np
 
-# ================= PATHS =================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Load YOLO model ONCE
+model = YOLO("ai/upload_model.tflite")  # your trained model
 
-MODEL_PATH = os.path.join(BASE_DIR, "upload_model.tflite")
-LABEL_PATH = os.path.join(BASE_DIR, "labels.json")
+# ✅ CLASS ID → NAME
+CLASS_NAMES = {
+    0: "Crown Rot Disease",
+    1: "Fruit Fascination Disorder",
+    2: "Fruit Rot Disease",
+    3: "Healthy",
+    4: "Mealybug Wilt Disease",
+    5: "Multiple Crown Disorder",
+    6: "Root Rot Disease"
+}
 
-# ================= LOAD MODEL =================
-interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
-interpreter.allocate_tensors()
-
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-
-# ================= LOAD LABELS =================
-with open(LABEL_PATH, "r") as f:
-    labels = json.load(f)
-
-# ================= ANALYZE IMAGE =================
 def analyze_upload_image(image_path):
-    # Load image
-    img = Image.open(image_path).convert("RGB")
-    img = img.resize((640, 640))
+    results = model(image_path, conf=0.3)
 
-    input_data = np.array(img, dtype=np.float32)
-    input_data = input_data / 255.0          # normalize
-    input_data = np.expand_dims(input_data, axis=0)
+    detections = []  # ✅ IMPORTANT
 
-    # Run inference
-    interpreter.set_tensor(input_details[0]["index"], input_data)
-    interpreter.invoke()
-    output = interpreter.get_tensor(output_details[0]["index"])[0]
+    for r in results:
+        if r.boxes is None:
+            continue
 
-    # Get prediction
-    class_id = int(np.argmax(output))
-    confidence = float(output[class_id])
+        for box in r.boxes:
+            cls_id = int(box.cls[0])
+            conf = float(box.conf[0])
 
-    print("INPUT DETAILS:", input_details)
+            label = CLASS_NAMES.get(cls_id, f"class{cls_id}")
 
-    return [{
-        "affliction": labels[str(class_id)],
-        "confidence": confidence
-    }]
+            detections.append({
+                "affliction": label,
+                "confidence": round(conf * 100, 2)
+            })
+
+    # ✅ If nothing detected
+    if not detections:
+        return {
+            "affliction": "Healthy Pineapple",
+            "confidence": 95,
+            "afflictions": []
+        }
+
+    # ✅ Highest confidence = main affliction
+    main = max(detections, key=lambda x: x["confidence"])
+
+    return {
+        "affliction": main["affliction"],
+        "confidence": main["confidence"],
+        "afflictions": detections
+    }

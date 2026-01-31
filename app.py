@@ -4,6 +4,7 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from ai.upload_ai import analyze_upload_image
+import traceback
 
 
 app = Flask(__name__)
@@ -150,37 +151,27 @@ def save_upload_result():
 
     return jsonify({"message": "Saved successfully"}), 201
 
+from ai.upload_ai import analyze_upload_image
+
 @app.route("/api/analyze-upload", methods=["POST"])
 def analyze_upload():
-    image = request.files.get("image")
+    file = request.files.get("image")
+    if not file:
+        return jsonify({"message": "No image uploaded"}), 400
 
-    if not image:
-        return jsonify({"message": "No image provided"}), 400
+    temp_path = "temp_upload.jpg"
+    file.save(temp_path)
 
-    filename = secure_filename(image.filename)
-    temp_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    image.save(temp_path)
+    result = analyze_upload_image(temp_path)
 
-    ai_results = analyze_upload_image(temp_path)
+    os.remove(temp_path)
 
-    primary = ai_results[0]
-
-    return jsonify({
-        "affliction": primary["affliction"],
-        "confidence": round(primary["confidence"] * 100, 1),
-        "afflictions": [
-            {
-                "affliction": a["affliction"],
-                "confidence": round(a["confidence"] * 100, 1)
-            }
-            for a in ai_results
-        ]
-    }), 200
+    return jsonify(result)
 
 @app.route("/api/upload-flight-log", methods=["POST"])
 def upload_flight_log():
 
-    try:
+    try:    
         flight_log = request.get_json(force=True)
 
         if not flight_log:
@@ -321,4 +312,8 @@ def download_management_strategies():
 # ================= RUN SERVER =================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",   # allow access from other devices
+        port=5000,        # default Flask port
+        debug=True
+    )
