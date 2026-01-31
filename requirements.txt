@@ -2,3 +2,7 @@ Flask
 gunicorn
 numpy
 tensorflow
+ultralytics
+opencv-python-headless
+torch
+torchvision
