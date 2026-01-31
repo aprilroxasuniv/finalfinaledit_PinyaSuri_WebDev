@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 # Load YOLO model ONCE
-model = YOLO("ai/upload_model.tflite")  # your trained model
+model = YOLO("ai/best.pt", task="detect") # your trained model
 
 # ✅ CLASS ID → NAME
 CLASS_NAMES = {
