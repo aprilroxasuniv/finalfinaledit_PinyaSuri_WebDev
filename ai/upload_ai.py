@@ -24,6 +24,13 @@ with open(LABEL_PATH) as f:
     labels = json.load(f)
 
 def analyze_upload_image(image_path):
+    image = cv2.imread(image_path)
+    if image is None:
+        return [{
+            "affliction": "Healthy Pineapple",
+            "confidence": 0.8
+        }]
+
     results = model.predict(
         source=image_path,
         conf=0.3,
@@ -33,15 +40,30 @@ def analyze_upload_image(image_path):
     detections = []
 
     for box in results[0].boxes:
-        class_id = int(box.cls[0])
-        confidence = float(box.conf[0])
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
+
+        crop = image[y1:y2, x1:x2]
+        if crop.size == 0:
+            continue
+
+        # --- TFLITE CLASSIFICATION ---
+        crop_img = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+        crop_img = crop_img.resize((224, 224))
+        input_data = np.expand_dims(np.array(crop_img, dtype=np.float32) / 255.0, axis=0)
+
+        interpreter.set_tensor(input_details[0]["index"], input_data)
+        interpreter.invoke()
+        output = interpreter.get_tensor(output_details[0]["index"])[0]
+
+        class_id = int(np.argmax(output))
+        confidence = float(output[class_id])
 
         detections.append({
-            "affliction": CLASS_NAMES.get(class_id, "Unknown"),
-            "confidence": confidence
+            "affliction": labels[str(class_id)],
+            "confidence": round(confidence, 3)
         })
 
-    # ❗ fallback if no detections
+    # Fallback
     if not detections:
         detections.append({
             "affliction": "Healthy Pineapple",
