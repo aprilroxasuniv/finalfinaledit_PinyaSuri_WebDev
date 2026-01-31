@@ -3,7 +3,7 @@ import tensorflow as tf
 from PIL import Image
 import json
 import os
-from ultralytics import YOLO
+import YOLO
 import cv2
 
 model = YOLO("runs/detect/train5 (v8n)/weights/best.pt")
