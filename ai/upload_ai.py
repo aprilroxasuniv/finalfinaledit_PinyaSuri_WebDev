@@ -18,7 +18,7 @@ CLASS_NAMES = {
 }
 
 def analyze_upload_image(image_path):
-    results = model(image_path, conf=0.3)
+    results = model(image_path, conf=0.3, imgsz=640, device="cpu", verbose=False)
 
     detections = []  # ✅ IMPORTANT
 
